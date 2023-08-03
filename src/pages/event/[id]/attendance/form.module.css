@@ -1,0 +1,6 @@
+
+
+.validate input:invalid {
+	color: red;
+	border-color: red;
+}

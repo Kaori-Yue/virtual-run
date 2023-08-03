@@ -1,0 +1,53 @@
+POST http://127.0.0.1:3000/api/user/create?q=s
+Content-Type: application/json
+
+{
+	"email": "crossknight",
+	"password": 1234
+}
+
+###
+POST http://127.0.0.1:3000/api/event/create
+Content-Type: application/json
+
+{
+	"email": "crossknight",
+	"password": 1234
+}
+
+###
+POST http://127.0.0.1:3000/api/user/signin?q=s
+Content-Type: application/json
+
+{
+	"email": "ck1",
+	"password": 1234
+}
+
+###
+POST http://localhost:3000/api/news/create
+
+
+
+###
+# @name csrf
+GET http://localhost:3000/api/auth/csrf
+
+
+
+
+
+
+
+
+###
+@csrfToken = {{csrf.response.body.csrfToken}}
+@authToken = {{ {{login.response.headers.set-cookie}} }}
+# @name login
+POST http://localhost:3000/api/auth/callback/credentials
+Content-Type: application/x-www-form-urlencoded
+
+csrfToken={{csrfToken}}&username=crossknight&password=
+
+###
+POST http://localhost:3000/api/auth/signin/credentials

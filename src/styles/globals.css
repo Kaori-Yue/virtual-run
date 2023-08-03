@@ -2,26 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
+/* :root {
+	--foreground-rgb: 0, 0, 0;
+	--background-start-rgb: 200, 200, 200;
+	--background-end-rgb: 235, 235, 235;
+  } */
 
-@media (prefers-color-scheme: dark) {
+
+/* @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
+} */
+
+/* dark theme */
+:root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
 }
 
+/* https://stackoverflow.com/questions/72117668/tailwind-colors-based-on-dark-mode */
+/* :root[class~="dark"] {
+    --color-primary: 247 147 34;
+    --color-text: 33 33 33;
+    --color-success: 0 200 81;
+    --color-info: 51 181 229;
+    --color-warn: 255 187 51;
+    --color-error: 254 78 78;
+  } */
+
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+	color: rgb(var(--foreground-rgb));
+	background: linear-gradient(to bottom,
+			transparent,
+			rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }
+
+/* .dropdown:hover .dropdown-menu {
+	display: block;
+  } */
