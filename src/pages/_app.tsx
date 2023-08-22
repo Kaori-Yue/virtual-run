@@ -1,15 +1,16 @@
 import '@/styles/globals.css'
 import type { NextPage } from 'next'
 import type { AppProps } from 'next/app'
-import { Component, ComponentType, ReactElement, ReactNode } from 'react'
+import { Component, ComponentType, ReactElement, ReactNode, useEffect, useState } from 'react'
 import { SessionProvider } from "next-auth/react"
 import FrontLayout from '@/components/layout/frontOffice'
 import BackLayout from '@/components/layout/backOffice'
 
 import { Prisma } from '@prisma/client'
-import SuperJson from "superjson"
-
+import SuperJSON from 'superjson'
 import { ThemeProvider } from 'next-themes'
+import { Middleware, SWRConfig } from 'swr'
+
 
 // SuperJson.registerClass(Prisma.Decimal, { identifier: "DecimalJS" })
 // const y= new Prisma.Decimal(24.454545)
@@ -42,7 +43,10 @@ type AppPropsWithLayout<P> = AppProps<P> & {
 };
 
 import type { Session } from "next-auth";
-import SuperJSON from 'superjson'
+import { fetcher } from '@/utils'
+import { useRouter } from 'next/router'
+import { awaitRouterMiddleware } from '@/middlewares/swr'
+
 export default function MyApp({ Component, pageProps }: AppPropsWithLayout<{ session: Session; }>) {
 	// Use the layout defined at the page level, if available
 	// const getLayout = Component.getLayout ?? ((page) => page)
@@ -100,24 +104,37 @@ export default function MyApp({ Component, pageProps }: AppPropsWithLayout<{ ses
 	//
 
 	const providers: Props_Compose['components'] = [
-		[ThemeProvider, { attribute: "class" }],
+		// defaultTheme: system
+		[ThemeProvider, { attribute: "class", defaultTheme: 'dark' }],
+		[SWRConfig, {
+			value: {
+				fetcher: fetcher,
+				revalidateOnFocus: false,
+				use: [awaitRouterMiddleware],
+			}
+		}],
+		[SessionProvider, {
+			session: pageProps.session,
+			refetchOnWindowFocus: false
+		}]
+
 		// <ThemeProvider attribute="class" />
 	]
 
 	const getLayout = Component.getLayout
 	if (getLayout)
 		return (
-			<Compose components={providers}>
-				<SessionProvider session={pageProps.session}>
-					{/* <BackLayout >
+			<Compose components={ providers }>
+				{/* <SessionProvider session={ pageProps.session } refetchOnWindowFocus={false}> */ }
+				{/* <BackLayout >
 				</BackLayout> */}
-					{/* <Component {...pageProps} /> */}
-					{getLayout(<Component {...pageProps} />)}
-					{
+				{/* <Component {...pageProps} /> */ }
+				{ getLayout(<Component { ...pageProps } />) }
+				{
 
-						// getLayout(<Component {...pageProps}/>)
-					}
-				</SessionProvider>
+					// getLayout(<Component {...pageProps}/>)
+				}
+				{/* </SessionProvider> */ }
 			</Compose>
 		)
 
@@ -135,12 +152,12 @@ export default function MyApp({ Component, pageProps }: AppPropsWithLayout<{ ses
 
 	const Layout = Component.defaultLayout === 'BACK_OFFICE' ? BackLayout : FrontLayout
 	return (
-		<Compose components={providers}>
-			<SessionProvider session={pageProps.session}>
-				<Layout>
-					<Component {...pageProps} />
-				</Layout>
-			</SessionProvider>
+		<Compose components={ providers }>
+			{/* <SessionProvider session={ pageProps.session } refetchOnWindowFocus={false}> */ }
+			<Layout>
+				<Component { ...pageProps } />
+			</Layout>
+			{/* </SessionProvider> */ }
 		</Compose>
 	)
 
@@ -176,7 +193,7 @@ export default function MyApp({ Component, pageProps }: AppPropsWithLayout<{ ses
 // ]
 type Props_Compose = {
 	components: [
-		React.JSXElementConstructor<React.PropsWithChildren<unknown>>,
+		React.JSXElementConstructor<React.PropsWithChildren<any>>,
 		object?
 	][]
 	children: React.ReactNode
@@ -186,13 +203,25 @@ function Compose(props: Props_Compose) {
 	const { components = [], children } = props
 	return (
 		<>
-			{components.reduceRight((acc, Comp) => {
+			{ components.reduceRight((acc, Comp) => {
 				const [Component, options] = Comp
-				return <Component {...(options || {})}>{acc}</Component>
-			}, children)}
+				return <Component { ...(options || {}) }>{ acc }</Component>
+			}, children) }
 		</>
 	)
 }
 
 // not work with typescript
 // https://javascript.plainenglish.io/how-to-combine-context-providers-for-cleaner-react-code-9ed24f20225e
+
+
+
+// BigInt.prototype.toJSON = function () {
+// 	const int = Number.parseInt(this.toString());
+// 	return int ?? this.toString();
+//   };
+
+BigInt.prototype.toJSON = function () {
+	return Number.parseInt(this.toString()) // for type number
+	// return this.toString(); // for type string
+};

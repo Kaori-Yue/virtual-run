@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+@layer utilities {
+
+	.no-spinner::-webkit-outer-spin-button,
+	.no-spinner::-webkit-inner-spin-button {
+		@apply appearance-none;
+		/* margin: 0; */
+	}
+}
+
+
 /* :root {
 	--foreground-rgb: 0, 0, 0;
 	--background-start-rgb: 200, 200, 200;
@@ -17,30 +29,83 @@
   }
 } */
 
-/* dark theme */
 :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+	--foreground-rgb: 0, 0, 0;
+	--background-start-rgb: 200, 200, 200;
+	--background-end-rgb: 235, 235, 235;
+	--background-repeat: no-repeat;
+	background-repeat: no-repeat;
 }
 
 /* https://stackoverflow.com/questions/72117668/tailwind-colors-based-on-dark-mode */
-/* :root[class~="dark"] {
-    --color-primary: 247 147 34;
-    --color-text: 33 33 33;
-    --color-success: 0 200 81;
-    --color-info: 51 181 229;
-    --color-warn: 255 187 51;
-    --color-error: 254 78 78;
-  } */
+:root[class~="dark"] {
+	--foreground-rgb: 255, 255, 255;
+	--background-start-rgb: 0, 0, 0;
+	--background-end-rgb: 0, 0, 0;
+	--color-primary: 247 147 34;
+	--color-text: 33 33 33;
+	--color-success: 0 200 81;
+	--color-info: 51 181 229;
+	--color-warn: 255 187 51;
+	--color-error: 254 78 78;
+}
 
 body {
 	color: rgb(var(--foreground-rgb));
 	background: linear-gradient(to bottom,
 			transparent,
 			rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+	/* background-repeat: ; */
+	min-height: 100vh;
+
 }
 
 /* .dropdown:hover .dropdown-menu {
 	display: block;
   } */
+
+body::after {
+	content: "Current breakpoint default (< 640px)";
+	position: fixed;
+	right: 0.5rem;
+	bottom: 0.5rem;
+	/* padding: 0.5rem 0.5rem 0.5rem 2rem; */
+	padding: 0.75rem;
+	background: no-repeat 0.5rem center / 1.25rem url(https://tailwindcss.com/favicon-32x32.png), #edf2f7;
+	border: 1px solid #e2e8f0;
+	color: #d53f8c;
+	font-size: 0.875rem;
+	font-weight: 600;
+	z-index: 99999;
+	border-radius: 0.25rem;
+}
+
+@media (min-width: 640px) {
+	body::after {
+		content: "Current breakpoint sm (640px)";
+	}
+}
+
+@media (min-width: 768px) {
+	body::after {
+		content: "Current breakpoint md (768px)";
+	}
+}
+
+@media (min-width: 1024px) {
+	body::after {
+		content: "Current breakpoint lg (1024px)";
+	}
+}
+
+@media (min-width: 1280px) {
+	body::after {
+		content: "Current breakpoint xl (1280px)";
+	}
+}
+
+@media (min-width: 1536px) {
+	body::after {
+		content: "Current breakpoint 2xl (1536px)";
+	}
+}

@@ -15,15 +15,16 @@ declare module "next-auth" {
 			image: string | null
 		} 
 	}
-	interface JWT extends DefaultJWT {
-		role: string
-	}
+	// interface JWT extends DefaultJWT {
+	// 	role: string
+	// }
 }
 
 declare module "next-auth/jwt" {
 	/** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
-	interface JWT {
+	interface JWT extends DefaultJWT {
 		role: Role
+		sub: string
 	}
 }
 

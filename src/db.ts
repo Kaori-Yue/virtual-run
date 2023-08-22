@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client'
+import type {State, Role} from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient<Prisma.PrismaClientOptions, 'query'> | undefined
@@ -37,8 +38,8 @@ export const db = globalForPrisma.prisma ?? new PrismaClient({
 //	console.log()
 //   })
 
-export { Prisma }
-export type {Event, Account, Event_Logs, News, User } from '@prisma/client'
+export type { Prisma, State, Role }
+export type {Event, Account, Activity, ActivitiesOnEvents, News, User } from '@prisma/client'
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
 

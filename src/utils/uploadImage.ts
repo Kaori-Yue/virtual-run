@@ -1,4 +1,8 @@
-export async function uploadToDiscord(image: File) {
+export async function uploadToDiscord(image: File): Promise<string> {
+	// throw new Error("Fetch error", {
+	// 	cause: 'upload to discord error'
+	// });
+	
 	const ENDPOINT = `https://discord.com/api/webhooks/1124220458825420910/iInVKmF2ISUQBc6p5mrRWa-T1yprxpYWeBttUzMy2u9jNeodqbxbyQLYIXzlf0xhMluG`
 	const payload = new FormData()
 	payload.append("image1", image)

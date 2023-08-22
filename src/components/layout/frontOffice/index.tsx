@@ -1,8 +1,9 @@
 import { Session } from 'next-auth';
 import { useSession, signOut, signIn } from 'next-auth/react'
 import Link from 'next/link';
-import styles from '../styles.module.css'
 import { useTheme } from 'next-themes'
+import React from 'react';
+import CustomToastContainer from '../toast';
 
 type LayoutProps = {
 	children: React.ReactNode,
@@ -13,10 +14,13 @@ export default function Layout({ children }: LayoutProps) {
 	// const { data: session, status } = useSession()
 	// if (session) {
 	// }
+	
 	return (
 		<>
-			{Header()}
-			{children}
+			<Header />
+			
+			<main>{children}</main>
+			< CustomToastContainer />
 			{/* {status === 'authenticated' ? Auth(session) : noAuth()}
 			{children}
 			<h2>Footer2</h2> */}
@@ -31,7 +35,9 @@ export default function Layout({ children }: LayoutProps) {
 	// 	</>
 }
 
-const Header = () => {
+
+
+const Header = React.memo(function Header() {
 	const { data: session, status } = useSession()
 	const { theme, setTheme } = useTheme()
 	console.log('HEADER RERENDER')
@@ -67,38 +73,41 @@ const Header = () => {
 						<li>
 							{
 								status === 'authenticated'
-									? <div id="dropdownNavbar" className={`${styles['dropdown']} font-normal rounded-lg shadow break-words`}>
-										<button id="dropdownNavbarLink" data-dropdown-toggle="dropdownNavbar" className="flex items-center justify-between w-full py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">
+									? <div id="dropdownNavbar" className={`group relative font-normal break-words`}>
+										<button id="dropdownNavbarLink" data-dropdown-toggle="dropdownNavbar" className=" flex items-center justify-between w-full py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 md:w-auto dark:text-white md:dark:hover:text-blue-500 dark:focus:text-white dark:border-gray-700 dark:hover:bg-gray-700 md:dark:hover:bg-transparent">
 											{/* IMG */}
-											{session?.user?.name ?? 'email: N/A'}
+											{session?.user?.name ?? session?.user?.email}
 											<svg className="w-5 h-5 ml-1" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
 												<path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
 											</svg>
 										</button>
-
-										<ul
-											className={`${styles['animate-dropdown']} ${styles['dropdown-menu']} z-10 py-2 -ml-6 border dark:border-gray-700 fixed dark:bg-gray-900  w-32 xl:w-40 rounded-lg hidden text-sm text-gray-700 dark:text-gray-400`}
-											aria-labelledby="dropdownLargeButton">
-											<li>
+										
+										<ul className={`group-hover:block animate-dropdown hidden right-0 z-10 absolute pt-4 py-2 w-32 xl:w-40 rounded-lg text-sm text-gray-700 dark:text-gray-400`} >
+											<li className='dark:border-gray-700 pt-2 border-t border-x rounded-t-lg bg-white dark:bg-gray-900'>
 												<Link href="/profile" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Profile</Link>
 											</li>
-											<li>
+											<li className='dark:border-gray-700 border-x bg-white dark:bg-gray-900'>
 												<Link href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</Link>
 											</li>
 											{
-												session?.role === 'ROOT' && (
-													<li>
-														<hr className='my-1 h-px bg-gray-200 border-0 dark:bg-gray-700' />
+												session?.role !== 'USER' && (
+													<>
+													<hr className=' h-px bg-gray-200 border-0 dark:bg-gray-700' />
+													<li className='dark:border-gray-700 border-x bg-white dark:bg-gray-900'>
+														
 														<Link href="/admin" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Back Office</Link>
 													</li>
+													</>
 												)
 											}
-											<hr className='my-1 h-px bg-gray-200 border-0 dark:bg-gray-700' />
-											<li>
+											<hr className='h-px bg-gray-200 border-0 dark:bg-gray-700' />
+											<li className='dark:border-gray-700 border-x bg-white dark:bg-gray-900'>
 												<button onClick={() => signOut()} className='text-left w-full block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white'>SignOut</button>
 											</li>
-											<hr className='my-1 h-px bg-gray-200 border-0 dark:bg-gray-700' />
-											<li className='block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white'>Role: {session.role}</li>
+											<hr className='h-px bg-gray-200 border-0 dark:bg-gray-700' />
+											<li className='dark:border-gray-700 pb-1 border-x border-b rounded-b-lg bg-white dark:bg-gray-900'>
+												<span className='block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white'>Role: {session.role}</span>
+											</li>
 										</ul>
 									</div>
 									: <button onClick={() => signIn()} className='block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent'>SignIn</button>
@@ -111,4 +120,5 @@ const Header = () => {
 			</div>
 		</nav>
 	)
-}
+})
+

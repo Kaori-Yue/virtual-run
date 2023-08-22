@@ -68,16 +68,8 @@ const Page: NextPageWithLayout = (props: any) => {
 			<Head>
 				<title>{`Event- ${props.title}`}</title>
 			</Head>
-			<Link href={'/index-no'}>index-no</Link>
-			<br />
-			<Link href={'/'}>index</Link>
 			<br />
 			{JSON.stringify(props, null, 4)}
-			<br />
-			<div className='flex flex-wrap gap-2 justify-center'>
-				<br />
-				{router.query.id}
-			</div>
 			<br />
 			<div dangerouslySetInnerHTML={{__html: props.content}}/>
 		</div>

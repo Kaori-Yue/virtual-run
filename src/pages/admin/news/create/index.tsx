@@ -11,6 +11,13 @@ import dynamic from "next/dynamic";
 import Editor from '@/components/editor'
 // import DOMPurify from 'dompurify'
 import sanitizeHtml from 'sanitize-html'
+import { uploadToDiscord } from "@/utils/uploadImage"
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.min.css'
+import { useRouter } from "next/router"
+import { preload } from "swr"
+import { fetcher } from "@/utils"
+import { useTheme } from "next-themes"
 
 // const QuillNoSSRWrapper = dynamic(
 // 	async () => {
@@ -46,50 +53,52 @@ const Editor2 = dynamic(() => import('@/components/editor'), {
 	ssr: false
 });
 
-async function uploadToDiscord(image: File) {
-	const ENDPOINT = `https://discord.com/api/webhooks/1124220458825420910/iInVKmF2ISUQBc6p5mrRWa-T1yprxpYWeBttUzMy2u9jNeodqbxbyQLYIXzlf0xhMluG`
-	const payload = new FormData()
-	payload.append('image1', image)
-	payload.append('payload_json', JSON.stringify({
-		'content': `filename: ${image.name}\nfilesize: ${image.size} bytes`
-	}))
-	const req = await fetch(ENDPOINT, {
-		method: "POST",
-		body: payload
-	})
-	console.log(req)
-	const res = await req.json()
-	console.log(res)
-	return res.attachments[0].url // | proxy_url
-
-
-}
-
-const createEvent = async (title: string, content: string) => {
-	const req = await fetch('/api/news/create', {
-		method: "POST",
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		body: JSON.stringify({
-			title,
-			content
-		})
-	})
-	const res = await req.json()
-	console.log(res)
-}
-
-// const readFile = (_file: string) => {
-// 	const fr = new FileReader()
-// 	fr.onload
-// }
-
 const Page: NextPageWithLayout = () => {
 	const [title, setTitle] = useState('')
 	const [content, setContent] = useState('')
-	const [thumbnail, setThumbnail] = useState('')
+	const [thumbnail, setThumbnail] = useState<File>()
 	const [thumbnailBlob, setThumbnailBlob] = useState('')
+	const router = useRouter()
+	const { theme } = useTheme()
+
+	const createEvent = async () => {
+		const toast_id = toast.loading("Image Uploading..")
+		try {
+			const image = await uploadToDiscord(thumbnail!)
+			toast.update(toast_id, {
+				render: 'Creating..'
+			})
+			const req = await fetch('/api/users/news', {
+				method: "POST",
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					title,
+					content,
+					thumbnail: image
+				})
+			})
+			if (req.status !== 200) throw Error
+			preload('/api/users/news', fetcher)
+			toast.update(toast_id, {
+				type: "success",
+				render: <>Create success.<br />Redirect in 5 seconds</>,
+				onClose: () => router.push('/admin/news'),
+				isLoading: false,
+				autoClose: 5000,
+			})
+		} catch (e) {
+			toast.update(toast_id, {
+				type: "error",
+				render: `${e instanceof Error ? `${e.name}: ${e.message} - ${e.cause}` : 'Error'}`,
+				isLoading: false,
+				closeOnClick: true,
+				autoClose: 5000,
+			})
+		}
+
+	}
 
 	useEffect(() => {
 		// thumbnail && setThumbnail(URL.createObjectURL(thumbnail as any))
@@ -103,8 +112,8 @@ const Page: NextPageWithLayout = () => {
 		const { files, value } = event.target
 		if (files === null) return
 		URL.createObjectURL(files[0])
-		const y =files[0]
-		setThumbnail(value)
+		const y = files[0]
+		setThumbnail(files[0])
 		setThumbnailBlob(URL.createObjectURL(files[0]))
 	}
 
@@ -112,7 +121,7 @@ const Page: NextPageWithLayout = () => {
 		<div className="container mx-auto">
 			<div className="mb-6">
 				<label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">News Title</label>
-				<input value={title} onChange={(event) => setTitle(event.target.value)} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="name@flowbite.com" required />
+				<input value={ title } onChange={ (event) => setTitle(event.target.value) } className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="name@flowbite.com" required />
 			</div>
 
 			Thumbnail
@@ -125,30 +134,33 @@ const Page: NextPageWithLayout = () => {
 						<p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
 						<p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
 					</div>
-					{/* <input value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} id="dropzone-file" type="file" accept="image/*" className="hidden" /> */}
-					<input value={thumbnail} onChange={onThumbnailChange} id="dropzone-file" type="file" accept="image/*" className="hidden" />
+					{/* <input value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} id="dropzone-file" type="file" accept="image/*" className="hidden" /> */ }
+					<input required onChange={ onThumbnailChange } id="dropzone-file" type="file" accept="image/*" className="hidden" />
 				</label>
 			</div>
-			{thumbnail}
+			{ thumbnail?.name }
 			Preview:
-			<img src={thumbnailBlob} />
+			<img src={ thumbnailBlob } />
 
 
-			{/* <ReactQuill theme="snow" value={value} onChange={setValue} /> */}
-			{/* <ReactQuillNoSSR modules={quillOptions.modules} theme="snow" value={value} onChange={setValue} /> */}
-			{/* <Editor value={value} onChange={setValue}/> */}
+			{/* <ReactQuill theme="snow" value={value} onChange={setValue} /> */ }
+			{/* <ReactQuillNoSSR modules={quillOptions.modules} theme="snow" value={value} onChange={setValue} /> */ }
+			{/* <Editor value={value} onChange={setValue}/> */ }
 			<div className="mb-6">
 				<label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">News Content</label>
-				<Editor2 value={content} onChange={setContent} />
+				<Editor2 value={ content } onChange={ setContent } />
 			</div>
-			<button onClick={() => createEvent(title, content)}>Submit</button>
+			<button
+				onClick={ () => createEvent() }
+				className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+			>Submit</button>
 			<br />
-			{content}
+			{ content }
 			<br />
 			<br />
-			{sanitizeHtml(content, sanitizeHtmlOptions)}
+			{ sanitizeHtml(content, sanitizeHtmlOptions) }
 			<br />
-			<div dangerouslySetInnerHTML={{ __html: sanitizeHtml(content, sanitizeHtmlOptions) }} />
+			<div dangerouslySetInnerHTML={ { __html: sanitizeHtml(content, sanitizeHtmlOptions) } } />
 		</div>
 	)
 
@@ -156,45 +168,6 @@ const Page: NextPageWithLayout = () => {
 }
 
 
-// Page.getLayout = function getLayout(page: ReactElement) {
-// 	return (
-// 		<Header>{page}</Header>
-// 	)
-// }
 Page.defaultLayout = 'BACK_OFFICE'
 
 export default Page
-
-// async function imageHandler() {
-// 	const input = document.createElement('input');
-// 	input.setAttribute('type', 'file');
-// 	input.setAttribute('accept', 'image/*');
-// 	input.click();
-
-// 	input.onchange = async () => {
-// 		const file = input.files ? input.files[0] : null;
-// 		let data = null;
-// 		const formData = new FormData();
-
-// 		const quillObj = quillRef?.current?.getEditor();
-// 		const range = quillObj?.getSelection();
-
-// 		if (file) {
-// 			formData.append('file', file);
-// 			formData.append('resource_type', 'raw');
-
-// 			const responseUpload = await fetch(
-// 				`${process.env.NEXT_PUBLIC_IMAGE_UPLOAD}/upload`,
-// 				{ method: 'POST', body: formData }
-// 			);
-
-// 			data = await responseUpload.json();
-// 			if (data.error) {
-// 				console.error(data.error);
-// 			}
-
-// 			quillObj.editor.insertEmbed(range.index, 'image', data?.secure_url);
-// 		}
-// 	};
-// };
-// } 

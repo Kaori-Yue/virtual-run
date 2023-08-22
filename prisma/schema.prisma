@@ -25,18 +25,52 @@ enum Role {
 }
 
 model User {
-    id            String       @id @default(cuid())
+    id            String          @id @default(cuid())
     name          String?
-    email         String?      @unique
+    email         String?         @unique
     emailVerified DateTime?
     image         String?
     password      String
-    role          Role         @default(USER)
+    created_at    DateTime        @default(now())
+    role          Role            @default(USER)
     accounts      Account[]
     sessions      Session[]
     News          News[]
     Event         Event[]
-    Event_Logs    Event_Logs[]
+    Activities    Activity[]
+}
+
+model Activity {
+    id                 String               @id @default(cuid())
+    User               User                 @relation(fields: [userId], references: [id])
+    userId             String
+    created_at         DateTime             @default(now())
+    assigned_at        DateTime
+    distance           Int // store at meters -> Kilometers // need * 1000 
+    duration           Int                  @db.MediumInt // 3 bytes // store at seconds
+    screenshot         String               @db.VarChar(255)
+    ActivitiesOnEvents ActivitiesOnEvents[]
+}
+
+enum State {
+    Reject
+    Pending
+    Approved
+}
+
+// https://www.prisma.io/docs/concepts/components/prisma-schema/relations/many-to-many-relations#explict-many-to-many-relations
+// Explicit many-to-many relations
+model ActivitiesOnEvents {
+    Activity   Activity @relation(fields: [activityId], references: [id])
+    activityId String
+    Event      Event    @relation(fields: [eventId], references: [id])
+    eventId    Int
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
+    // 
+    status     State    @default(Pending)
+
+    @@id([activityId, eventId])
 }
 
 model Account {
@@ -87,33 +121,37 @@ model News {
 }
 
 model Event {
-    id                 Int          @id @default(autoincrement())
-    created_at         DateTime     @default(now())
-    updated_at         DateTime     @updatedAt
+    id                 Int                  @id @default(autoincrement())
+    created_at         DateTime             @default(now())
+    updated_at         DateTime             @updatedAt
     userId             String
-    user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
     title              String
-    content            String       @db.Text
+    content            String               @db.Text
     thumbnail          String
     active             Boolean
     register_startdate DateTime
     register_enddate   DateTime
-    Event_Logs         Event_Logs[]
+    // Event_Logs         Event_Logs[]
     // Event_Manager      Event_Manager?
+    // Activity           Activity[]
+    ActivitiesOnEvents ActivitiesOnEvents[]
 }
 
-model Event_Logs {
-    id         String   @id @default(cuid())
-    user       User     @relation(fields: [userId], references: [id])
-    userId     String
-    event      Event    @relation(fields: [eventId], references: [id])
-    eventId    Int
-    created_at DateTime @default(now())
-    distance   Int // store at meters -> Kilometers // need * 1000 
-    duraion    Int      @db.MediumInt // 3 bytes
-    screenshot String
-	// state pending
-}
+
+
+// model Event_Logs {
+//     id         String   @id @default(cuid())
+//     user       User     @relation(fields: [userId], references: [id])
+//     userId     String
+//     event      Event    @relation(fields: [eventId], references: [id])
+//     eventId    Int
+//     created_at DateTime @default(now())
+//     distance   Int // store at meters -> Kilometers // need * 1000 
+//     duration    Int      @db.MediumInt // 3 bytes
+//     screenshot String
+// 	// state pending
+// }
 
 // model Event_Manager {
 //     id      Int   @id @default(autoincrement())

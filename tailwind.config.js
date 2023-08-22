@@ -29,6 +29,16 @@ module.exports = {
 					"800": "#1e40af",
 					"900": "#1e3a8a"
 				}
+			},
+			keyframes: {
+				dropdown: {
+					'0%': { transform: 'translateY(5px)' },
+					'100%': { transform: 'translateY(0px)' },
+					// '0%, 100%': { opacity: '50%' }, 
+				}
+			},
+			animation: {
+				dropdown: 'dropdown 0.3s'
 			}
 		},
 	},

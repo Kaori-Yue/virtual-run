@@ -9,60 +9,67 @@ import { db } from '@/db'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { News } from '@prisma/client'
+import { useRouter } from "next/router"
+import useSWR from "swr"
+import { NewsListByUser } from "@/pages/api/users/news"
+import ReusableTable, { CompactType } from "@/components/ReusableTable"
+import dayjs from "dayjs"
+import { formatDateTime } from "@/utils"
 
-type Props = {
-	newsItems: News[]
-}
-export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
-	const session = await getServerSession(context.req, context.res, authOptions)
-	console.log('ssss!: ' + JSON.stringify(session))
-	const query = await db.news.findMany({
-		where: { userId: session?.user?.id }
-	})
-	// clean data
-	for (const q of query) {
-		q.content = ''
-	}
-	return {
-		props: {
-			newsItems: JSON.parse(JSON.stringify(query))
-		}
-	}
-}
 
-const Page: NextPageWithLayout<Props> = (props) => {
-	console.log(props)
+
+const Page: NextPageWithLayout = () => {
+
 
 	return (
 		<div className="container mx-auto">
-			<pre>
-			{
-
-				JSON.stringify(props, null , 2)
-			}
-			</pre>
+			{/* <pre> { JSON.stringify(data, null, 2) } </pre> */ }
 			<div className="flex justify-end">
-				<Link href={'/admin/news/create'}>
-				<button type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-					Add News
-				</button>
+				<Link href={ '/admin/news/create' }>
+					<button type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+						Add News
+					</button>
 				</Link>
 			</div>
-			<Table items={props.newsItems} />
+			<Table />
 		</div>
 	)
-
-
 }
 
-const Table = (props: { items: News[] }) => {
+const Table = () => {
+	const router = useRouter()
+	const { data, isLoading } = useSWR<NewsListByUser>('/api/users/news')
+	const props: CompactType = {
+		headers: ["Title", "Create at", 'Update at', 'Action'],
+		contents: [],
+		isLoading: isLoading,
+	}
+	if (isLoading || !data) return <ReusableTable { ...props } />
+	for (const [i, item] of data.items.entries()) {
+		props.contents.push([
+			item.title,
+			dayjs(item.created_at).format(formatDateTime),
+			dayjs(item.updated_at).format(formatDateTime),
+			{
+				className: 'px-6 py-4 flex gap-x-2',
+				data: <>
+					<Link href={ `/news/${item.id}` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</Link>
+					<Link href={ `#` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
+				</>
+			}
+		])
+	}
+	return <ReusableTable { ...props } />
+}
+
+const Table2 = (props: { items: News[] }) => {
 
 	const content = () => {
 		for (const [key, value] of props.items.entries()) {
 			return (
 				<tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
 					<th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-						{value.title}
+						{ value.title }
 					</th>
 					<td className="px-6 py-4">
 						Silver
@@ -74,7 +81,7 @@ const Table = (props: { items: News[] }) => {
 						$29
 					</td>
 					<td className="px-6 py-4">
-						<Link href={`/admin/news/edit/${value.id}`} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
+						<Link href={ `/admin/news/edit/${value.id}` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
 					</td>
 				</tr>
 			)
@@ -111,7 +118,7 @@ const Table = (props: { items: News[] }) => {
 					</tr>
 				</thead>
 				<tbody>
-					{content()}
+					{ content() }
 					{/* <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                     AirTag
@@ -163,10 +170,6 @@ const Table = (props: { items: News[] }) => {
 }
 
 
-Page.getLayout = function getLayout(page: ReactElement) {
-	return (
-		<Header>{page}</Header>
-	)
-}
+Page.defaultLayout = 'BACK_OFFICE'
 
 export default Page

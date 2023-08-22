@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
 			// e.g. domain, username, password, 2FA token, etc.
 			// You can pass any HTML attribute to the <input> tag through the object.
 			credentials: {
-				username: { label: "Username", type: "text", placeholder: "jsmith" },
+				username: { label: "Username", type: "text", placeholder: "email" },
 				password: { label: "Password", type: "password" },
 			},
 
@@ -79,6 +79,7 @@ export const authOptions: NextAuthOptions = {
 				// 	}
 				// })
 				if (credentials === undefined) return null
+				// TODO: on prod -> auth
 				const user = await db.user.findFirst({
 					where: {
 						email: credentials.username,
@@ -111,4 +112,10 @@ export const authOptions: NextAuthOptions = {
 		signIn: "/signin",
 	},
 }
+
+// const authHandler = NextAuth(authOptions);
+// export default async function handler(...params: any[]) {
+//   await authHandler(...params);
+// }
+
 export default NextAuth(authOptions)
