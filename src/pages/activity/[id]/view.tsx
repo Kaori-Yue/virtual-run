@@ -7,6 +7,7 @@ import dayjs from "dayjs"
 import _duration from 'dayjs/plugin/duration'
 dayjs.extend(_duration)
 import { durationToPace, formatDateTime } from '@/utils/index'
+import ReusableTable, { CompactType } from "@/components/ReusableTable"
 
 type Props = {
 	activity: Activity
@@ -19,10 +20,7 @@ const Page: NextPageWithLayout = (props) => {
 	if (isLoading || !data) return <span>Loading..</span>
 	return (
 		<div className="container mx-auto">
-			<pre>
-				{ JSON.stringify(data, null, 4) }
-			</pre>
-			<p className="text-center my-2">Activity Detail</p>
+			<p className="text-center my-2">รายละเอียดการวิ่ง</p>
 			{/* { <p className="text-center">#{data} - {props.event.title}</p> } */ }
 			<Table item={ data } />
 			<div className="pt-4 text-center">
@@ -36,53 +34,18 @@ const Page: NextPageWithLayout = (props) => {
 }
 
 const Table = ({ item }: { item: Activity }) => {
-	return (
-		<div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-			<table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-				<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-					<tr>
-						<th scope="col" className="px-6 py-3">
-							Distance
-						</th>
-						<th title="Kilometers" scope="col" className="px-6 py-3">
-							Total Distance
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Attendance
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Create at
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Assign at
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{
-						<tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-							<td className="px-6 py-4">
-								{ item.distance / 1000 }
-							</td>
-							<td className="px-6 py-4">
-								{ dayjs.duration(item.duration, 'seconds').format("HH:mm:ss") }
-							</td>
-							<td className="px-6 py-4">
-								{ durationToPace(item.duration, item.distance / 1000) }
-							</td>
-							<td className="px-6 py-4">
-								{ dayjs(item.created_at).format(formatDateTime) }
-							</td>
-							<td className="px-6 py-4">
-								{ dayjs(item.assigned_at).format(formatDateTime) }
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
-
-	)
+	const props:CompactType = {
+		headers: ["ระยะทาง", "ระยะเวลา", "เพซ", "เวลาสร้าง", "เวลาทำกิจกรรม", "เวลาแก้ไขล่าสุด"],
+		contents: [[
+			item.distance / 1000,
+			dayjs.duration(item.duration, 'seconds').format("HH:mm:ss"),
+			durationToPace(item.duration, item.distance / 1000),
+			dayjs(item.created_at).format(formatDateTime),
+			dayjs(item.assigned_at).format(formatDateTime),
+			dayjs(item.updated_at).format(formatDateTime)
+		]]
+	}
+	return <ReusableTable { ...props } />
 }
 
 

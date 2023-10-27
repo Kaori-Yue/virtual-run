@@ -6,6 +6,8 @@ import { useRouter } from "next/router"
 import useSWR from "swr"
 import ReusableTable, { CompactType } from "@/components/ReusableTable"
 import { ReturnType_Rank } from "@/pages/api/event/[id]/rank"
+import { UserCurcle } from "@/components/svg"
+import { SortDown } from "@/components/util/table"
 
 type Props = {
 	score: {
@@ -25,7 +27,7 @@ const Page: NextPageWithLayout = () => {
 	return (
 		<div className="container mx-auto">
 			{/* <pre>{ JSON.stringify(data, null, 2) }</pre> */ }
-			<p className="text-center my-2">Score Board</p>
+			<p className="text-center my-2">การจัดอันดับ</p>
 			{/* <p className="text-center">#{props.event.id} - {props.event.title}</p> */ }
 			{/* <Table items={props.score} /> */ }
 			<Table />
@@ -38,18 +40,50 @@ const Table = () => {
 	const router = useRouter()
 	const { data, isLoading } = useSWR<ReturnType_Rank>(router.query.id ? `/api/event/${router.query.id}/rank` : null)
 	const props: CompactType = {
-		headers: ["Name", "Total Distance", "Times"],
+		headers: [
+			{
+				className: 'px-6 py-3 w-16',
+				text: '#'
+			},
+			// "#",
+			"ผู้ใช้",
+			<SortDown text="ระยะทางรวม" />,
+			"จำนวนการส่งผล"],
 		contents: [],
 		isLoading: isLoading,
+		// forceLoadingWhenNoContent: false
 	}
 	if (isLoading || !data || data.success === false) return <ReusableTable { ...props } />
-	for (const item of data.data) {
+	if (data.data.list.length === 0)
+		return <span className="block text-center mt-4">ไม่พบข้อมูล</span>
+	for (const item of data.data.list) {
 		props.contents.push(
-			[item.userId, item.distance_sum / 1000, item.times]
+			[
+				// {
+				// 	className: 'px-6 py-3 ',
+				// 	data: item.rank
+				// },
+				item.rank,
+				{
+					className: 'inline-flex items-center px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white',
+					data: <>
+						{ item.image
+							? <img className="w-10 h-10 rounded-full" src={ item.image } />
+							: <UserCurcle className="w-10 h-10" /> }
+						<div className="pl-3">
+							<div className="text-base font-semibold">{ item.email }</div>
+							<div className="font-normal text-gray-500">{ item.name || "<Unset>" }</div>
+						</div>
+					</>
+
+				}, item.distance_sum / 1000, item.times]
 		)
 	}
 	// return <pre>{ JSON.stringify(data, null, 2) }</pre>
-	return <ReusableTable { ...props } />
+	return <>
+		<span className="block mt-1 mb-3 text-center">{data.data.event?.title}</span>
+		<ReusableTable { ...props } />
+	</>
 }
 
 const Table22 = (props: { items: Props['score'] }) => {

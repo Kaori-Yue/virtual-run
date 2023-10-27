@@ -22,10 +22,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 				success: true,
 			})
 		}),
+		PATCH: withExceptions(async (req, res) => {
+			const id = await z.coerce.number().parseAsync(req.query.id)
+			const payload = await patchPayload.parseAsync(req.body)
+			const update = await updateEventById(id, payload)
+			return res.json(update)
+		}),
 	})
 }
 
-function updateEventById(id: number, payload: z.infer<typeof createPayload>) {
+const patchPayload = z.object({
+	active: z.boolean()
+}).partial()
+
+function updateEventById(id: number, payload: z.infer<typeof createPayload | typeof patchPayload>) {
 	return db.event.update({
 		where: { id },
 		data: { ...payload }

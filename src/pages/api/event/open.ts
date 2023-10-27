@@ -31,9 +31,14 @@ async function getEventWithRangeTime(req: NextApiRequest, res: NextApiResponse<E
 				// register_enddate: { lte: end }
 				// 
 				// https://stackoverflow.com/questions/74096682/find-date-range-in-prisma-orm
-				OR: [
-					{ register_startdate: { lte: end }, register_enddate: { gte: start } },
-					{ register_startdate: { gte: start }, register_enddate: { lte: end } }
+				// OR: [
+				// 	{ register_startdate: { lte: end }, register_enddate: { gte: start } },
+				// 	{ register_startdate: { gte: start }, register_enddate: { lte: end } }
+				// ]
+
+				// 
+				AND: [
+					{  }
 				]
 			},
 			take: limit,

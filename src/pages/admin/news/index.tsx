@@ -10,24 +10,28 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { News } from '@prisma/client'
 import { useRouter } from "next/router"
-import useSWR from "swr"
+import useSWR, { KeyedMutator } from "swr"
 import { NewsListByUser } from "@/pages/api/users/news"
 import ReusableTable, { CompactType } from "@/components/ReusableTable"
 import dayjs from "dayjs"
 import { formatDateTime } from "@/utils"
+import { toast } from "react-toastify"
+import Paginate from "@/components/ReusableTable/Paginate"
+import { SortDown } from "@/components/util/table"
+import { useSession } from "next-auth/react"
+import { UserCurcle } from "@/components/svg"
 
 
 
 const Page: NextPageWithLayout = () => {
 
-
 	return (
-		<div className="container mx-auto">
+		<div className="container mx-auto mt-4">
 			{/* <pre> { JSON.stringify(data, null, 2) } </pre> */ }
 			<div className="flex justify-end">
 				<Link href={ '/admin/news/create' }>
 					<button type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-						Add News
+						เพิ่มข่าว
 					</button>
 				</Link>
 			</div>
@@ -36,139 +40,119 @@ const Page: NextPageWithLayout = () => {
 	)
 }
 
+
 const Table = () => {
 	const router = useRouter()
-	const { data, isLoading } = useSWR<NewsListByUser>('/api/users/news')
+	const { data: session } = useSession()
+	const { data, isLoading, mutate } = useSWR<NewsListByUser>('/api/users/news')
 	const props: CompactType = {
-		headers: ["Title", "Create at", 'Update at', 'Action'],
+		headers: [
+			'ชื่อข่าว',
+			session?.role === 'ROOT' ? 'User' : undefined,
+			<SortDown text='วันที่สร้าง' />,
+			'แก้ไขล่าสุด',
+			'การมองเห็น',
+			'Action'],
 		contents: [],
 		isLoading: isLoading,
 	}
 	if (isLoading || !data) return <ReusableTable { ...props } />
 	for (const [i, item] of data.items.entries()) {
 		props.contents.push([
-			item.title,
+			<Link href={ `/news/${item.id}` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">{ item.title }</Link>,
+			session?.role === 'ROOT'
+				?
+				{
+					className: 'inline-flex items-center px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white',
+					data: <>
+						{ item.user?.image
+							? <img className="w-10 h-10 rounded-full" src={ item.user.image } />
+							: <UserCurcle className="w-10 h-10" /> }
+						<div className="pl-3">
+							<div className="text-base font-semibold">{ item.user?.email }</div>
+							<div className="font-normal text-gray-500">{ item.user?.name || "<Unset>" }</div>
+						</div>
+					</>
+				}
+				: undefined,
 			dayjs(item.created_at).format(formatDateTime),
 			dayjs(item.updated_at).format(formatDateTime),
+			<label className="relative inline-flex items-center cursor-pointer">
+				<input type="checkbox" className="sr-only peer" onChange={ e => setNewsVisible(item.id, e.target.checked, mutate) } checked={ item.active } />
+				<div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+
+				</div>
+				<span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">{ item.active ? 'แสดง' : 'ซ่อน' }</span>
+			</label>,
 			{
 				className: 'px-6 py-4 flex gap-x-2',
 				data: <>
-					<Link href={ `/news/${item.id}` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</Link>
-					<Link href={ `#` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
+					{/* <Link href={ `/news/${item.id}` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</Link> */ }
+					<Link href={ `/admin/news/${item.id}/edit` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">แก้ไข</Link>
 				</>
 			}
 		])
 	}
-	return <ReusableTable { ...props } />
+	return <ReusableTable { ...props } paginate={ Paginate(data.meta) } />
 }
 
-const Table2 = (props: { items: News[] }) => {
+const setNewsVisible = async (newsId: number, state: boolean, mutate: KeyedMutator<NewsListByUser>) => {
+	console.log(newsId, state)
 
-	const content = () => {
-		for (const [key, value] of props.items.entries()) {
-			return (
-				<tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-					<th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-						{ value.title }
-					</th>
-					<td className="px-6 py-4">
-						Silver
-					</td>
-					<td className="px-6 py-4">
-						Accessories
-					</td>
-					<td className="px-6 py-4">
-						$29
-					</td>
-					<td className="px-6 py-4">
-						<Link href={ `/admin/news/edit/${value.id}` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</Link>
-					</td>
-				</tr>
-			)
-		}
+	try {
+		await mutate(async (cache) => {
+			if (!cache) return cache
+			const req = await fetch('/api/users/news/' + newsId, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					active: state
+				})
+			})
+			const res = await req.json() as News
+			// return res
+			const edit = cache.items.map(m => {
+				if (m.id !== res.id)
+					return m
+				return { ...m, active: state }
+			})
+			return {
+				...cache,
+				items: edit
+			}
+		}, {
+			optimisticData(currentData, displayedData) {
+				if (!currentData) return currentData!
+				const edit = currentData.items.map(m => {
+					if (m.id !== newsId) return m
+					return { ...m, active: state }
+				})
+				return {
+					...currentData,
+					items: edit,
+				}
+			},
+			// populateCache(result, currentData) {
+			// 	if (!currentData) return currentData!
+			// 	const edit = currentData.items.map(m => {
+			// 		if (m.id !== result.id) return m
+			// 		return result
+			// 	})
+			// 	return {
+			// 		...currentData,
+			// 		items: edit,
+			// 	}
+			// },
+			revalidate: false,
+			rollbackOnError: true
+		})
+		toast.success('Success')
+	} catch (e) {
+		toast.error('Error')
 	}
-
-	return (
-
-		<div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-			<table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-				<thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-					<tr>
-						{/* <th scope="col" className="p-4">
-                    <div className="flex items-center">
-                        <input id="checkbox-all-search" type="checkbox" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                        <label htmlFor="checkbox-all-search" className="sr-only">checkbox</label>
-                    </div>
-                </th> */}
-						<th scope="col" className="px-6 py-3">
-							Title
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Color
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Category
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Price
-						</th>
-						<th scope="col" className="px-6 py-3">
-							Action
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{ content() }
-					{/* <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                    AirTag
-                </th>
-                <td className="px-6 py-4">
-                    Silver
-                </td>
-                <td className="px-6 py-4">
-                    Accessories
-                </td>
-                <td className="px-6 py-4">
-                    $29
-                </td>
-                <td className="px-6 py-4">
-                    <a href="#" className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
-                </td>
-            </tr> */}
-				</tbody>
-			</table>
-			<nav className="flex items-center justify-between pt-4" aria-label="Table navigation">
-				<span className="text-sm font-normal text-gray-500 dark:text-gray-400">Showing <span className="font-semibold text-gray-900 dark:text-white">1-10</span> of <span className="font-semibold text-gray-900 dark:text-white">1000</span></span>
-				<ul className="inline-flex -space-x-px text-sm h-8">
-					<li>
-						<a href="#" className="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Previous</a>
-					</li>
-					<li>
-						<a href="#" className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
-					</li>
-					<li>
-						<a href="#" className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">2</a>
-					</li>
-					<li>
-						<a href="#" aria-current="page" className="flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">3</a>
-					</li>
-					<li>
-						<a href="#" className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">4</a>
-					</li>
-					<li>
-						<a href="#" className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">5</a>
-					</li>
-					<li>
-						<a href="#" className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Next</a>
-					</li>
-				</ul>
-			</nav>
-		</div>
-
-	)
 }
-
 
 Page.defaultLayout = 'BACK_OFFICE'
 

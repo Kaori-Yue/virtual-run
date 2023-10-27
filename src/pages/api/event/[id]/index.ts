@@ -30,7 +30,8 @@ async function get(req: NextApiRequest, res: NextApiResponse<Event>) {
 export async function getEventById(id: number) {
 	const event = await db.event.findUnique({
 		where: {
-			id: id
+			id: id,
+			active: true
 		},
 	})
 	return event

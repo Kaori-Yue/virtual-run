@@ -80,7 +80,7 @@ const Page: NextPageWithLayout<Props> = (props) => {
 	const [startDate, setStartDate] = useState<Date | undefined>(props.event?.register_startdate)
 	const [endDate, setEndDate] = useState<Date | undefined>(props.event?.register_enddate)
 	const router = useRouter()
-	const { theme } = useTheme()
+	// const { theme } = useTheme()
 
 	// useEffect(() => {
 
@@ -134,13 +134,14 @@ const Page: NextPageWithLayout<Props> = (props) => {
 				})
 			})
 			if (req.status !== 200) throw Error
-			preload('/api/users/event', fetcher)
+			// preload('/api/users/event', fetcher)
 			toast.update(toast_id, {
 				type: "success",
 				render: <>Update success.<br />Redirect in 5 seconds</>,
 				onClose: () => router.push('/admin/event'),
 				isLoading: false,
 				autoClose: 5000,
+				closeOnClick: true,
 			})
 		} catch (e) {
 			toast.update(toast_id, {
@@ -162,8 +163,23 @@ const Page: NextPageWithLayout<Props> = (props) => {
 					<input value={ title } onChange={ (event) => setTitle(event.target.value) } className={ css.input } placeholder="Event name" required />
 				</div>
 
-				Thumbnail
-				<div className="flex items-center justify-center w-full">
+			<div className="mb-6">
+			<label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Thumbnail</label>
+			<div className="text-center">
+					<label className="relative group inline-block cursor-pointer ">
+						<div className="group-hover:bg-black">
+							<img className="group-hover:opacity-50 w-80 rounded-t-lg object-cover h-48 " src={ thumbnailBlob } />
+						</div>
+						<div className="opacity-20  group-hover:opacity-100 absolute inset-0 flex justify-center items-center flex-col">
+							<span className="block text-2xl">Change</span>
+						</div>
+						<input onChange={ onThumbnailChange } id="dropzone-file" type="file" accept="image/*" className="hidden" />
+						{/* <input ref={ ref } onChange={ limitFileSize } accept="image/*" name="avatar" type="file" className="hidden" /> */ }
+					</label>
+				</div>
+			</div>
+				{/* Thumbnail */}
+				{/* <div className="flex items-center justify-center w-full">
 					<label htmlFor="dropzone-file" className="relative flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
 						<div className="flex flex-col items-center justify-center pt-5 pb-6">
 							<svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
@@ -171,14 +187,14 @@ const Page: NextPageWithLayout<Props> = (props) => {
 							</svg>
 							<p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
 							<p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
-						</div>
+						</div> */}
 						{/* <input value={thumbnail} onChange={(event) => setThumbnail(event.target.value)} id="dropzone-file" type="file" accept="image/*" className="hidden" /> */ }
-						<input onChange={ onThumbnailChange } id="dropzone-file" type="file" accept="image/*" className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" />
+						{/* <input onChange={ onThumbnailChange } id="dropzone-file" type="file" accept="image/*" className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer" />
 					</label>
-				</div>
-				{ thumbnail?.name }
+				</div> */}
+				{/* { thumbnail?.name }
 				Preview:
-				<img src={ thumbnailBlob } />
+				<img src={ thumbnailBlob } /> */}
 
 				{/* Date */ }
 				<div className="grid gap-6 mb-6 md:grid-cols-2">
@@ -213,12 +229,12 @@ const Page: NextPageWithLayout<Props> = (props) => {
 				<button type="submit" className={ css.submit }>Submit</button>
 
 				<br />
-				{ content }
+				{/* { content } */}
 				<br />
 				<br />
-				{ sanitizeHtml(content, sanitizeHtmlOptions) }
+				{/* { sanitizeHtml(content, sanitizeHtmlOptions) } */}
 				<br />
-				<div dangerouslySetInnerHTML={ { __html: sanitizeHtml(content, sanitizeHtmlOptions) } } />
+				{/* <div dangerouslySetInnerHTML={ { __html: sanitizeHtml(content, sanitizeHtmlOptions) } } /> */}
 
 
 			</div>

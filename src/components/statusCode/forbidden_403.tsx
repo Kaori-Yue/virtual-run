@@ -22,5 +22,5 @@ const Forbidden: NextPageWithLayout = () => {
 // Forbidden.getLayout = function getLayout(page: ReactElement) {
 // 	return <span>222</span>
 // }
-
+Forbidden.displayName = 'Forbidden'
 export default Forbidden

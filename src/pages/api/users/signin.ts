@@ -14,9 +14,9 @@ type Data = {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-	console.log("h", req.headers)
-	console.log("body", req.body)
-	console.log("q", req.query)
+	// console.log("h", req.headers)
+	// console.log("body", req.body)
+	// console.log("q", req.query)
 	const { method } = req
 	switch (method) {
 		case "GET":

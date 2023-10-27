@@ -23,6 +23,7 @@ function AirDatePickerComponent(props: Props) {
 
 	useEffect(() => {
 		datePicker.current?.update({ ...options })
+		console.log('props c')
 	}, [props])
 
 

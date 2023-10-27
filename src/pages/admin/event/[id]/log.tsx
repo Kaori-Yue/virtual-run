@@ -13,6 +13,8 @@ import { LogEventById } from "@/pages/api/users/event/[id]/log"
 import Loading from "@/components/Loading"
 import { toast } from "react-toastify"
 import ReusableTable, { CompactType } from "@/components/ReusableTable"
+import { ChevronDown, UserCurcle } from "@/components/svg"
+import Paginate from "@/components/ReusableTable/Paginate"
 dayjs.extend(_duration)
 type Props = {
 	// event: Prisma.EventGetPayload<{ include: { Event_Logs: true } }>
@@ -41,22 +43,43 @@ const Table = () => {
 	const router = useRouter()
 	const { data, isLoading } = useSWR<LogEventById>(router.query.id && `/api/users/event/${router.query.id}/log`)
 	const props: CompactType = {
-		headers: ["#", "ชื่อ", "ระยะทาง", "ระยะเวลา","เพซ", "เวลาเข้าร่วมกิจกรรม", "เวลาแก้ไขสถานะล่าสุด", "สถานะ", "Action"],
+		headers: ["#", "ชื่อ", "ระยะทาง", "ระยะเวลา", "เพซ", "Screenshot", "เวลาเข้าร่วมกิจกรรม", {
+			text: <div className="flex items-center">
+				เวลาแก้ไขสถานะล่าสุด
+				<ChevronDown className='w-3 h-3 ml-1.5' />
+			</div>,
+		}, "สถานะ", "Action"],
 		contents: [],
 		isLoading: isLoading,
 
 	}
 	console.log(data, isLoading)
 	if (isLoading || !data) return <ReusableTable { ...props } />
+	if (data.items.length === 0)
+		return <span className="block text-center">ไม่พบข้อมูล</span>
 	for (const [i, item] of data.items.entries()) {
 		props.contents.push([
 			i + 1,
-			item.Activity.userId,
+			// item.Activity.User.email,
+			{
+				className: 'inline-flex items-center px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white',
+				data: <>
+					{ item.Activity.User.image
+						? <img className="w-10 h-10 rounded-full" src={ item.Activity.User.image } />
+						: <UserCurcle className="w-10 h-10" /> }
+					<div className="pl-3">
+						<div className="text-base font-semibold">{ item.Activity.User.email }</div>
+						<div className="font-normal text-gray-500">{ item.Activity.User.name || "<Unset>" }</div>
+					</div>
+				</>
+			},
 			item.Activity.distance / 1000,
 			dayjs.duration(item.Activity.duration, 'seconds').format('HH:mm:ss'),
 			durationToPace(item.Activity.duration, item.Activity.distance / 1000),
+			<Link href={item.Activity.screenshot} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Image</Link>,
 			dayjs(item.created_at).format(formatDateTime),
-			dayjs(item.updated_at).format(formatDateTime),
+			// dayjs(item.updated_at).format(formatDateTime),
+			dayjs(item.Activity.updated_at).format(formatDateTime),
 			<BadgeStatus status={ item.status } />,
 			{
 				className: 'px-6 py-3 flex gap-x-2',
@@ -64,7 +87,7 @@ const Table = () => {
 			},
 		])
 	}
-	return <ReusableTable { ...props } />
+	return <ReusableTable { ...props } paginate={Paginate(data.meta)} />
 
 }
 

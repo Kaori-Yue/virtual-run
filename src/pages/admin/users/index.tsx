@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { NextPageWithLayout } from "@/pages/_app"
-import { FormEvent, FormEventHandler, ReactElement, RefObject, useMemo, useRef, useState } from "react"
+import { FormEvent, FormEventHandler, ReactElement, RefObject, useEffect, useMemo, useRef, useState } from "react"
 import Header from '@/components/layout/backOffice'
 import { GetServerSideProps, InferGetStaticPropsType, InferGetServerSidePropsType } from "next/types"
 import { db } from '@/db'
@@ -18,6 +18,9 @@ import { formatDateTime } from "@/utils"
 import { UserByRole } from "@/pages/api/users/role"
 import { toast } from "react-toastify"
 import ButtonLoading from "@/components/ButtonLoading"
+import { useSession } from "next-auth/react"
+import { UserCurcle } from "@/components/svg"
+import { renderRole } from "@/components/util/Role"
 
 
 
@@ -45,17 +48,27 @@ const Table = () => {
 	const [isShow, setIsShow] = useState(false)
 	const [editUserPlaceHolder, setEditUserPlaceHolder] = useState<UserSecure>()
 	const props: CompactType = {
-		headers: ["UID", 'Email', "ชื่อที่แสดง", 'Role', 'วันที่สมัคร', 'Action'],
+		headers: ['ผู้ใช้', 'Role', 'วันที่สมัครใช้งาน', 'Action'],
 		contents: [],
 		isLoading: isLoading,
 	}
 	if (isLoading || !data) return <ReusableTable { ...props } />
 	for (const [i, item] of data.entries()) {
 		props.contents.push([
-			item.id,
-			item.email,
-			item.name || "<Unset>",
-			item.role,
+			{
+				className: 'inline-flex items-center px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white',
+				data: <>
+					{ item.image
+						? <img className="w-10 h-10 rounded-full" src={ item.image } />
+						: <UserCurcle className="w-10 h-10" /> }
+					<div className="pl-3">
+						<div className="text-base font-semibold">{ item?.email }</div>
+						<div className="font-normal text-gray-500">{ item?.name || "<Unset>" }</div>
+					</div>
+				</>
+			},
+			renderRole(item.role),
+			// item.role,
 			dayjs(item.created_at).format(formatDateTime),
 			<span onClick={ () => { setEditUserPlaceHolder(item); setIsShow(true); } } className='cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'>Edit</span>
 		])
@@ -92,24 +105,27 @@ const Modal = ({ closeModal, data, ...props }: ModalProps) => {
 			const form = new FormData(event.target as HTMLFormElement)
 			const payload = Object.fromEntries(form.entries())
 			console.log(payload)
-			const req = await fetch('/api/users/role', {
-				method: "POST",
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(payload)
-			})
-			if (req.status !== 200) throw Error()
-			const res = await req.json() as UserSecure
-			props.mutate && props.mutate((data) => {
-				// const update = data?.filter(f => f.id === res.id).shift()
-				// if (update) update.
-				return data?.map(m => {
-					if (m.id === res.id)
-						return res
-					return m
+			props.mutate && await props.mutate<UserSecure[]>(async (cache) => {
+				if (!cache) return cache
+				const req = await fetch('/api/users/role', {
+					method: "POST",
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(payload)
 				})
-			}, false)
+				if (req.status !== 200) throw new Error(req.statusText, { cause: req.statusText })
+				const res = await req.json() as UserSecure
+				const edit = cache.map(m => {
+					if (m.id !== res.id) return m
+					return res
+				})
+				return edit
+			}, {
+				revalidate: false,
+				rollbackOnError: true
+			})
+
 			toast.success('Success')
 			closeModal()
 		} catch (e: any) {
@@ -154,9 +170,9 @@ const Modal = ({ closeModal, data, ...props }: ModalProps) => {
 								<label htmlFor="role" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role</label>
 								<select id="role" name="role" className={ `${css.input} ` } required>
 									<option disabled selected >Choose a role</option>
-									<option selected={ data?.role === 'ROOT' } value="ROOT">Root</option>
-									<option selected={ data?.role === 'ADMIN' } value="ADMIN">Admin</option>
-									<option selected={ data?.role === 'USER' } value="USER">User</option>
+									<option disabled selected={ data?.role === 'ROOT' } value="ROOT">ผู้ดูแลระบบ</option>
+									<option disabled={ data?.role === 'ROOT' } selected={ data?.role === 'ADMIN' } value="ADMIN">ผู้จัดการกิจกรรม</option>
+									<option disabled={ data?.role === 'ROOT' } selected={ data?.role === 'USER' } value="USER">ผู้ใช้งานทั่วไป</option>
 								</select>
 							</div>
 						</div>

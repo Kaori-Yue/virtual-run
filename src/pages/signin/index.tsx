@@ -9,6 +9,7 @@ import { NextPageWithLayout } from "@/pages/_app"
 import { signIn } from "next-auth/react"
 import { useRouter } from 'next/router'
 import Link from "next/link"
+import Head from "next/head"
 
 const Page: NextPageWithLayout = () => {
 	const [email, setEmail] = useState('')
@@ -27,10 +28,13 @@ const Page: NextPageWithLayout = () => {
 
 	return (
 		<section className="bg-gray-50 dark:bg-gray-900">
+			<Head>
+				<title>{`Sign in`}</title>
+			</Head>
 			<div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
 				<Link href="/" className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
 					<img className="w-8 h-8 mr-2" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" alt="logo" />
-					Flowbite
+					Virtual Run
 				</Link>
 				<pre>
 				</pre>
@@ -55,7 +59,7 @@ const Page: NextPageWithLayout = () => {
 						<form className="space-y-4 md:space-y-6" onSubmit={submit}>
 							<div>
 								<label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your email</label>
-								<input value={email} onChange={e => setEmail(e.target.value)} name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="name@company.com" />
+								<input value={email} onChange={e => setEmail(e.target.value)} name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="your email" />
 							</div>
 							<div>
 								<label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>

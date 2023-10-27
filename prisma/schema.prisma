@@ -38,6 +38,7 @@ model User {
     News          News[]
     Event         Event[]
     Activities    Activity[]
+    RegisterEvent RegistryEvent[]
 }
 
 model Activity {
@@ -46,6 +47,7 @@ model Activity {
     userId             String
     created_at         DateTime             @default(now())
     assigned_at        DateTime
+    updated_at         DateTime             @updatedAt
     distance           Int // store at meters -> Kilometers // need * 1000 
     duration           Int                  @db.MediumInt // 3 bytes // store at seconds
     screenshot         String               @db.VarChar(255)
@@ -117,7 +119,7 @@ model News {
     title      String
     content    String   @db.Text
     thumbnail  String
-    active     Boolean
+    active     Boolean  @default(true)
 }
 
 model Event {
@@ -129,16 +131,25 @@ model Event {
     title              String
     content            String               @db.Text
     thumbnail          String
-    active             Boolean
+    active             Boolean              @default(true)
     register_startdate DateTime
     register_enddate   DateTime
     // Event_Logs         Event_Logs[]
     // Event_Manager      Event_Manager?
     // Activity           Activity[]
     ActivitiesOnEvents ActivitiesOnEvents[]
+    RegisterEvent      RegistryEvent[]
 }
 
+model RegistryEvent {
+    // id      Int    @id @default(autoincrement())
+    User    User   @relation(fields: [userId], references: [id])
+    userId  String
+    eventId Int
+    Event   Event  @relation(fields: [eventId], references: [id])
 
+    @@id([userId, eventId])
+}
 
 // model Event_Logs {
 //     id         String   @id @default(cuid())

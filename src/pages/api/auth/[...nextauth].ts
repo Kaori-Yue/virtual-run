@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
 	adapter: PrismaAdapter(db) as Adapter,
 
 	session: {
-		strategy: "jwt",
+		strategy: "jwt", // MUST explicitly
 		// strategy: "database",
 		// maxAge: 30 * 24 * 60 * 60, // 30 Days
 		// updateAge: 24 * 60 * 60, // 1 Day
@@ -22,16 +22,38 @@ export const authOptions: NextAuthOptions = {
 	// 	sessionToken: {options:{}}
 	// },
 
+	// flow => signin -> callbacks.jwt -> callbacks.session
 	callbacks: {
-		jwt({ token, user, account, profile, trigger }) {
-			// console.log('jwt trigger: ' + trigger)
+		async jwt({ token, user, account, profile, trigger, session }) {
+			// console.log("jwt trigger: " + trigger)
 			// console.log("jwt token")
 			// console.log(token)
-			// console.log('jwt user')
+			// console.log("jwt user")
 			// console.log(user)
-			// console.log(account)
+			// // console.log(account)
+			// console.log("jwt profile")
 			// console.log(profile)
-			if (user) token.role = user.role
+			// console.log("jwt session")
+			// console.log(session)
+			if (trigger === "update") {
+				const newName = session?.name || undefined
+				const newImage = session?.image || undefined
+				console.log("tigger update data:", newName, newImage)
+				const update = await db.user.update({
+					where: { id: token.sub },
+					data: {
+						name: newName,
+						image: newImage,
+					},
+				})
+				token.name = update.name
+				token.picture = update.image
+			}
+			if (user) {
+				token.test = "TESTQ"
+				token.role = user.role
+				// token.picture = 'https://cdn.discordapp.com/attachments/1124220420283957341/1146414285631803403/85190610_p0.jpg'
+			}
 			return token
 		},
 
@@ -88,9 +110,8 @@ export const authOptions: NextAuthOptions = {
 				})
 
 				// const user = { id: "12", name: "qJw Smith", email: "jsmith@example.com", role: 'root' }
-				console.log('user,', user)
+				console.log("user,", user)
 				if (user) {
-					// user.role
 					// Any object returned will be saved in `user` property of the JWT
 					// const y = { ...user, id: String(user.id), role: 'root' }
 					// console.log(y)

@@ -18,14 +18,11 @@ import buddhistEra from 'dayjs/plugin/buddhistEra'
 import useSWR, { Fetcher } from 'swr'
 import { EventList } from './api/event'
 import { NewsList } from './api/news'
-import { fetcher, fetcher_multiple } from '@/utils'
+import { fetcher, fetcher_multiple, formatDateTime } from '@/utils'
+import Loading from '@/components/Loading'
 // dayjs.locale('th')
 dayjs.extend(buddhistEra)
 dayjs.locale(locale_th)
-
-// const Page: NextPageWithLayout = () => {
-//   return <p>hello world</p>
-// }
 
 // type Props = {
 // 	items: {
@@ -43,41 +40,6 @@ type Props = {
 
 
 
-// export const getStaticProps: GetStaticProps<{props: Props}> = async ({ params }) => {
-// 	// const id = params?.id
-// 	// const news = await db.news.findMany()
-
-// 	const [news, events] = await Promise.all([
-// 		db.news.findMany(),
-// 		db.event.findMany()
-// 	])
-// 	// const data:Props['items'] = [...Array(10).keys()].map(i => ({
-// 	// 	imageURL: faker.image.urlPicsumPhotos(),
-// 	// 	title: faker.lorem.sentence().trim(),
-// 	// 	subTitle: faker.lorem.paragraph().trim(),
-// 	// 	url: '/news/' + i
-// 	// }))
-// 	while(news.length < 3) {
-// 		news.push({
-// 			active: true,
-// 			content: 'mock',
-// 			id: 0,
-// 			title: 'mock',
-// 			userId: '',
-// 			updated_at: new Date(),
-// 			created_at: new Date(),
-// 			thumbnail: faker.image.urlPicsumPhotos(),
-// 		})
-// 	}
-// 	return JSON.parse(JSON.stringify({
-// 		props: {
-// 			news,
-// 			events
-// 		}
-// 	}))
-// }
-
-
 const Page: NextPageWithLayout<Props> = () => {
 	// const f = faker.image.urlPlaceholder
 	// console.log('p')
@@ -87,24 +49,26 @@ const Page: NextPageWithLayout<Props> = () => {
 	// 	revalidateOnFocus: false
 	// })
 
-	const { data: event, isLoading: evnet_loading } = useSWR<EventList>('/api/event')
-	const { data: news, isLoading: news_loading } = useSWR<NewsList>('/api/news')
+	const { data: event, isLoading: evnet_loading } = useSWR<EventList>('/api/event?limit=8')
+	const { data: news, isLoading: news_loading } = useSWR<NewsList>('/api/news?limit=8')
 
 	// console.log({
 	// 	data, error, isLoading
 	// })
-	if (evnet_loading || news_loading || !event || !news) return <span>Loading..</span>
+	if (evnet_loading || news_loading || !event || !news) return <Loading className='mt-4' />
 	// if (error || data === undefined) return <span>Error.. { JSON.stringify(error) }</span>
 	// return <pre>{ JSON.stringify(data, null, 4) }</pre>
 	return (
-		<div className='container mx-auto'>
-			<br />
-			{/*  */ }
-			News:
-			<div className='flex flex-wrap gap-2 justify-center'>
+		<div className='container mx-auto my-4'>
+			<div className='flex flex-wrap gap-3 justify-center'>
+				<span className='basis-1/4 md:basis-2/5 lg:basis-10/12 xl:basis-8/12 2xl:basis-5/12'>ข่าวสาร</span>
+				<Link href={ `/news` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline basis-1/4 md:basis-2/5 lg:basis-1/12 xl:basis-1/12 2xl:basis-5/12 text-right">
+					ทั้งหมด
+				</Link>
+				{/* <span className='basis-1/4 md:basis-2/5 lg:basis-1/12 xl:basis-1/12 2xl:basis-5/12 text-right'>ทั้งหมด</span> */ }
 				{
 					news.items.map((v, i) => {
-						return <Card key={ i } url={ `/news/${v.id}` } imageURL={ v.thumbnail } subTitle={ 'sub title' } title={ v.title }></Card>
+						return <Card key={ i } url={ `/news/${v.id}` } imageURL={ v.thumbnail } subTitle={ dayjs(v.updated_at).format('DD MMM BB') } title={ v.title }></Card>
 					})
 				}
 				{/* {
@@ -126,21 +90,30 @@ const Page: NextPageWithLayout<Props> = () => {
 			{/*  */ }
 
 
-			Event:
-			<div className='flex flex-wrap gap-2 justify-center'>
-				{
-					event.items.map((v, i) => {
-						const subTitle = dayjs(v.register_startdate).format('DD MMM BB') + ' - ' + dayjs(v.register_enddate).format('DD MMM BB')
-						return <Card key={ i } url={ `/event/${v.id}` } imageURL={ v.thumbnail } subTitle={ subTitle } title={ v.title }></Card>
-					})
-				}
-				{/* {
+			<div className='flex flex-col mt-8'>
+				{/* <div className='flex justify-between mb-2'>
+					<span>กิจกรรม</span>
+					<span>ทั้งหมด</span>
+				</div> */}
+				<div className='flex flex-wrap gap-3 justify-center'>
+					<span className='basis-1/4 md:basis-2/5 lg:basis-10/12 xl:basis-8/12 2xl:basis-5/12'>กิจกรรม</span>
+					<Link href={ `/event` } className="font-medium text-blue-600 dark:text-blue-500 hover:underline basis-1/4 md:basis-2/5 lg:basis-1/12 xl:basis-1/12 2xl:basis-5/12 text-right">
+						ทั้งหมด
+					</Link>
+					{/* <span className='basis-1/4 md:basis-2/5 lg:basis-1/12 xl:basis-1/12 2xl:basis-5/12 text-right'>ทั้งหมด</span> */ }
+					{
+						event.items.map((v, i) => {
+							const subTitle = dayjs(v.register_startdate).format('DD MMM BB') + ' - ' + dayjs(v.register_enddate).format('DD MMM BB')
+							return <Card key={ i } url={ `/event/${v.id}` } imageURL={ v.thumbnail } subTitle={ subTitle } title={ v.title }></Card>
+						})
+					}
+					{/* {
 					props.events.map((v, i) => {
 						const subTitle = dayjs(v.register_startdate).format('DD MMM BB') + ' - ' + dayjs(v.register_enddate).format('DD MMM BB')
 						return <Card key={ i } url={ `/event/${v.id}` } imageURL={ v.thumbnail } subTitle={ subTitle } title={ v.title }></Card>
 					})
 				} */}
-				{/* {
+					{/* {
 					[...Array(10)].map((x, i) =>
 						<Card key={i}
 							url={'/news/' + i } 
@@ -149,6 +122,7 @@ const Page: NextPageWithLayout<Props> = () => {
 							subTitle={faker.lorem.paragraph().trim()} />
 					)
 				} */}
+				</div>
 			</div>
 		</div>
 	)

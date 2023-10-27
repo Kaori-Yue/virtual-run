@@ -17,7 +17,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 	})
 }
 
-export type LogEventById = PaginatedResult<Prisma.ActivitiesOnEventsGetPayload<{ include: { Activity: true } }>>
+const ActivitiesInclude = Prisma.validator<Prisma.ActivitiesOnEventsInclude>()({
+	Activity: { include: {
+		User: {
+			select: {
+				id: true,
+				email: true,
+				name: true,
+				image: true
+			}
+		}
+	} }
+})
+
+// export type LogEventById = PaginatedResult<Prisma.ActivitiesOnEventsGetPayload<{ include: { Activity: true } }>>
+export type LogEventById = PaginatedResult<Prisma.ActivitiesOnEventsGetPayload<{include: typeof ActivitiesInclude}>>
+
 async function getEventByUser(req: NextApiRequest, res: NextApiResponse<LogEventById>) {
 	const limit = Number(req.query.limit) || 10
 	const page = Number(req.query.page) || 1
@@ -44,7 +59,16 @@ async function getEventByUser(req: NextApiRequest, res: NextApiResponse<LogEvent
 			where: { eventId: +(req.query.id as string) },
 			take: limit,
 			skip: page > 0 ? limit * (page - 1) : 0,
-			include: { Activity: true },
+			include: ActivitiesInclude,
+			// include: { Activity: { include: { User: {
+			// 	select: {
+			// 		id: true,
+			// 		email: true,
+			// 		name: true,
+
+			// 	}
+			// } } } },
+			orderBy: { Activity: { updated_at: "desc" } }
 		}),
 
 		db.activitiesOnEvents.count({ where: { eventId: +(req.query.id as string) } }),

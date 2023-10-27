@@ -8,26 +8,55 @@ import Link from 'next/link'
 import { NextPageWithLayout } from '@/pages/_app'
 import { useRouter } from 'next/router'
 import { GetStaticPaths, GetStaticProps } from 'next/types'
-import { db } from '@/db'
+import { News, db } from '@/db'
 import { ParsedUrlQuery } from 'querystring'
 import Head from 'next/head'
+import { getNewsById } from '../api/news/[id]'
 
 
-
-
-export async function getServerSideProps({ params }: { params: ParsedUrlQuery }) {
-	// Fetch data from external API
-	const q = await db.news.findUnique({
-		where: {
-			id: +(params.id as string)
-		}
-	})
-
-	console.log('ssr')
-	console.log(q)
-	// Pass data to the page via props
-	return { props:  JSON.parse(JSON.stringify(q)) }
+type Props = {
+	news: News
 }
+export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
+	const id = params!.id as string
+	const data = await getNewsById(+id)
+	if (!data) return { notFound: true }
+	return {
+
+		props: {
+			news: data
+		}
+	}
+}
+
+export const getStaticPaths: GetStaticPaths = () => {
+	const ids = [1]
+
+	const paths = ids.map((id) => ({
+		params: {
+			id: String(id)
+		}
+	}))
+
+	return {
+		paths,
+		fallback: 'blocking'
+	}
+}
+
+// export async function getServerSideProps({ params }: { params: ParsedUrlQuery }) {
+// 	// Fetch data from external API
+// 	const q = await db.news.findUnique({
+// 		where: {
+// 			id: +(params.id as string),
+// 		}
+// 	})
+
+// 	console.log('ssr')
+// 	console.log(q)
+// 	// Pass data to the page via props
+// 	return { props:  JSON.parse(JSON.stringify(q)) }
+// }
 
 // export const getStaticProps: GetStaticProps = async ({ params }) => {
 // 	const id = params?.id
@@ -60,18 +89,18 @@ export async function getServerSideProps({ params }: { params: ParsedUrlQuery })
 // 	}
 // }
 
-const Page: NextPageWithLayout = (props: any) => {
+const News = (props: Props) => {
 	const router = useRouter()
 	const id = router.query.id
 	return (
 		<div className='container mx-auto'>
 			<Head>
-				<title>{`Event- ${props.title}`}</title>
+				<title>{`News - ${props.news.title}`}</title>
 			</Head>
 			<br />
-			{JSON.stringify(props, null, 4)}
+			{/* {JSON.stringify(props, null, 4)} */}
 			<br />
-			<div dangerouslySetInnerHTML={{__html: props.content}}/>
+			<div dangerouslySetInnerHTML={{__html: props.news.content}}/>
 		</div>
 	)
 }
@@ -82,7 +111,7 @@ const Page: NextPageWithLayout = (props: any) => {
 // 	)
 // }
 
-export default Page
+export default News
 
 // avoid hydration, because use faker to ramdom, server-side and client-side not match
 // export default dynamic(() => Promise.resolve(Page), { ssr: false })

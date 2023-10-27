@@ -9,7 +9,7 @@ export default function CustomToastContainer() {
 	return <ToastContainer
 		position="bottom-right"
 		autoClose={ 5000 }
-		// hideProgressBar={ true }
+		hideProgressBar={ true }
 		newestOnTop={ false }
 		closeOnClick
 		rtl={ false }

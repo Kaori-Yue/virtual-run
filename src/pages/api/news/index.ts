@@ -1,7 +1,10 @@
 import { db, News } from "@/db"
-import { MetaPage, apiSwitchHandler } from "@/utils/api"
+import { MetaPage, PaginatedResult, apiSwitchHandler } from "@/utils/api"
+import { Prisma } from "@prisma/client"
 import { NextApiRequest, NextApiResponse } from "next/types"
 import { faker } from "@faker-js/faker"
+import { getToken } from "next-auth/jwt"
+import { Optional } from "@prisma/client/runtime/library"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 	await apiSwitchHandler(req, res, {
@@ -15,15 +18,18 @@ export type NewsList = {
 	items: News[]
 	meta: MetaPage
 }
+
 async function getNews(req: NextApiRequest, res: NextApiResponse<NewsList>) {
 	const limit = Number(req.query.limit) || 10
 	const page = Number(req.query.page) || 1
 	const [data, total] = await Promise.all([
 		db.news.findMany({
+			where: { active: true },
 			take: limit,
 			skip: page > 0 ? limit * (page - 1) : 0,
+			orderBy: { created_at: 'desc' }
 		}),
-		db.news.count(),
+		db.news.count({ where: { active: true } }),
 	])
 	const lastPage = Math.ceil(total / limit)
 	res.status(200).json({

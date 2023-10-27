@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next/types"
 
 export * from "./auth"
 
-type HTTP_METHODS = "GET" | "POST" | "PUT"
+type HTTP_METHODS = "GET" | "POST" | "PUT" | "PATCH"
 type SwitchHandler = {
 	[key in HTTP_METHODS]?: (req: NextApiRequest, res: NextApiResponse) => Promise<unknown> | void
 }
@@ -23,10 +23,10 @@ export const apiSwitchHandler = async (req: NextApiRequest, res: NextApiResponse
 			else res.status(405).end(`${req.method} Not Allowed`)
 			break
 
-		// case "PATCH":
-		// 	if (handler.GET) await handler.GET(req, res)
-		// 	else res.status(405).end(`${req.method} Not Allowed`)
-		// 	break
+		case "PATCH":
+			if (handler.PATCH) await handler.PATCH(req, res)
+			else res.status(405).end(`${req.method} Not Allowed`)
+			break
 
 		default:
 			res.status(405).end(`${req.method} Not Allowed`)

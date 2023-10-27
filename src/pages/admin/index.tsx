@@ -9,8 +9,9 @@ import Header from '@/components/layout/backOffice'
 const Page: NextPageWithLayout = () => {
 	return (
 		<>
-		<p>hello world3</p>
-		<Link href='/'>index</Link>
+		<span className="block text-center mt-2 text-lg">Welcome to Back Office</span>
+		{/* <p>hello world3</p> */}
+		{/* <Link href='/'>index</Link> */}
 		</>
 	)
 	

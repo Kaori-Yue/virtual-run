@@ -39,13 +39,6 @@ async function attachEvent(req: NextApiRequest, res: NextApiResponse) {
 	res.json(attach)
 }
 
-function ValidateNotNull<T1 extends Object>(payload: T1, attr: (keyof T1)[]): payload is Required<T1> {
-	for (const att of attr) {
-		if (Object.hasOwn(payload, att) === false) return false
-	}
-	return true
-}
-
 export type ActivityAttached = Prisma.ActivityGetPayload<{ include: { ActivitiesOnEvents: { include: { Event: true } } } }>
 async function getActivitiesWithAttached(req: NextApiRequest, res: NextApiResponse<ActivityAttached>) {
 	const token = await getToken({ req })

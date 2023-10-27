@@ -16,6 +16,8 @@ import type { Event } from '@prisma/client'
 import useSWR from 'swr'
 import { fetcher } from '@/utils'
 import { getEventById } from '@/pages/api/event/[id]'
+import { useSession } from 'next-auth/react'
+import { toast } from 'react-toastify'
 
 type Props = {
 	event: Event
@@ -101,20 +103,54 @@ const Page: NextPageWithLayout<InferGetStaticPropsType<typeof getStaticProps>> =
 
 			{/* {JSON.stringify(props)} */ }
 			<div dangerouslySetInnerHTML={ { __html: data?.content ?? '' } } />
+			<ButtonRegister expireDate={ props.event.register_enddate } />
 		</div>
 	)
 }
 
-// Page.getLayout = function getLayout(page: ReactElement) {
-// 	return (
-// 		<Header>{page}</Header>
-// 	)
-// }
+const ButtonRegister = ({ expireDate }: { expireDate: Date }) => {
+	const style = `block mx-auto mt-4 mb-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800`
 
+	if (expireDate.getTime() < new Date().getTime()) return <button type='button' className={`${style} bg-red-700 hover:bg-red-800focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900`}>
+		หมดระยะเวลาเข้าร่วมแล้ว
+	</button>
+	const { status } = useSession()
+	const router = useRouter()
+	const { data, mutate } = useSWR(status === 'authenticated' ? '/api/users/registry?eventId=' + router.query.id : undefined)
 
-
-// for 404 page
-// Page.appendLayout = 'FRONT_OFFICE'
-// Page.getLayout = getLayout
+	
+	const register = async () => {
+		try {
+			const req = await fetch('/api/users/registry', {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					eventId: router.query.id
+				})
+			})
+			if (req.status !== 200) throw Error('Error')
+			const res = await req.json()
+			mutate(() => res)
+			toast.success('Success')
+		} catch (e) {
+			toast.error('Error')
+		}
+	}
+	if (data === null) return (
+		<button type='button' onClick={ e => register() } className={ style }>
+			คลิกเพื่อสมัครเข้าร่วมกิจกรรม
+		</button>
+	)
+	if (data) return (
+		<button type='button' className={ style }>
+			เข้าร่วมแล้ว
+		</button>
+	)
+	return (
+		<button type='button' className={ style }>
+			ลงชื่อเข้าใจเพื่อเข้าร่วม
+		</button>
+	)
+}
 
 export default Page
